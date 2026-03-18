@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# claude local settings
+.claude/settings.local.json
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDE
+.idea
+.DS_Store
+
+# Obsidian workspace UI state
+workspace/knowledge/vault/.obsidian/workspace.json
+workspace/knowledge/vault/.obsidian/workspace-mobile.json
+
+# SQLite transient files
+workspace/knowledge/*.db-wal
+workspace/knowledge/*.db-shm

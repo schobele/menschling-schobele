@@ -1,0 +1,37 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(mensch *)",
+			"Bash(git status)",
+			"Bash(git diff *)",
+			"Bash(git log *)",
+			"Bash(cat *)",
+			"Bash(ls *)",
+			"Bash(find *)",
+			"Bash(bun test *)",
+			"Bash(bun run typecheck)",
+			"Read",
+			"Write(workspace/knowledge/vault/04-log/*)",
+			"Write(workspace/knowledge/vault/00-inbox/*)",
+			"Glob",
+			"Grep"
+		]
+	},
+	"enabledPlugins": {
+		"context7@claude-plugins-official": true,
+		"typescript-lsp@claude-plugins-official": true,
+		"superpowers@claude-plugins-official": true,
+		"claude-md-management@claude-plugins-official": true,
+		"claude-code-setup@claude-plugins-official": true,
+		"linear@claude-plugins-official": true,
+		"agent-sdk-dev@claude-plugins-official": true,
+		"skill-creator@claude-plugins-official": true
+	},
+	"effortLevel": "medium",
+	"autoMemoryEnabled": true,
+	"autoMemoryDirectory": ".claude/memory",
+	"env": {
+		"MENSCH_ROOT": ".",
+		"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+	}
+}

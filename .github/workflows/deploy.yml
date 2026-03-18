@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    # Skip auto-commits from agents to prevent deploy loops
+    if: "!startsWith(github.event.head_commit.message, 'auto:')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect change scope
+        id: scope
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          if echo "$CHANGED" | grep -qE '^(Dockerfile|docker-compose|scripts/entrypoint)'; then
+            echo "level=rebuild" >> "$GITHUB_OUTPUT"
+          elif echo "$CHANGED" | grep -qE '^workspace/apps/gateway/'; then
+            echo "level=restart-gateway" >> "$GITHUB_OUTPUT"
+          else
+            echo "level=pull" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Hot-reload (pull + install)
+        if: steps.scope.outputs.level == 'pull' || steps.scope.outputs.level == 'restart-gateway'
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            docker compose -f /opt/menschling/docker-compose.yml \
+              exec -T menschling bash -c 'cd /app && git pull --rebase origin main && bun install'
+          "
+
+      - name: Restart gateway
+        if: steps.scope.outputs.level == 'restart-gateway'
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            docker compose -f /opt/menschling/docker-compose.yml \
+              exec -T menschling touch /tmp/.gateway-restart && \
+            docker compose -f /opt/menschling/docker-compose.yml \
+              exec -T menschling pkill -SIGUSR1 -f entrypoint.sh
+          "
+
+      - name: Full rebuild
+        if: steps.scope.outputs.level == 'rebuild'
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/menschling && \
+            git pull && \
+            docker compose up -d --build menschling
+          "

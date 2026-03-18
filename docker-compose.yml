@@ -1,0 +1,61 @@
+services:
+  menschling:
+    build: .
+    restart: unless-stopped
+    stop_grace_period: 120s
+    ports:
+      - "${GATEWAY_PORT:-3200}:3200"
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PAPERCLIP_URL=http://paperclip:3100
+    secrets:
+      - deploy_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./workspace/knowledge/vault:/app/workspace/knowledge/vault
+
+  paperclip:
+    build:
+      context: .
+      dockerfile: docker/paperclip.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PAPERCLIP_PORT:-3100}:3100"
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql://paperclip:paperclip@postgres:5432/paperclip
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-changeme-generate-a-real-secret}
+      - BETTER_AUTH_BASE_URL=http://localhost:3100
+      - PAPERCLIP_CONFIG=/paperclip/instances/default/config.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paperclip_home:/paperclip
+      - .:/workspace:ro
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paperclip
+      POSTGRES_PASSWORD: paperclip
+      POSTGRES_DB: paperclip
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperclip"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+secrets:
+  deploy_key:
+    file: ${DEPLOY_KEY_PATH:-./deploy_key}
+
+volumes:
+  pgdata:
+  paperclip_home:

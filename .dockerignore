@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+.git
+.gitignore
+*.log
+coverage
+.cache
+.idea
+.DS_Store
+workspace/knowledge/*.db-wal
+workspace/knowledge/*.db-shm
